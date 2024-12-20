@@ -9,7 +9,7 @@
       </li>
     </ul>
     
-    <!-- 新增模态框 -->
+    <!-- 模态框 -->
     <div v-if="isModalVisible" class="modal">
       <div class="modal-content">
         <h3>{{ selectedPlaylist.name }} - 歌曲列表</h3>
@@ -266,7 +266,7 @@ export default {
 .song-details {
   display: flex;
   flex-direction: column;
-  width: 60%; /* 增加歌曲详情区域的宽度 */
+  width: 100%; /* 增加歌曲详情区域的宽度 */
   word-wrap: break-word; /* 确保文本换行 */
 }
 
@@ -294,7 +294,7 @@ export default {
 
 /* 新增歌词样式 */
 .lyrics {
-  width: 40%; /* 设置歌词区域宽度 */
+  width: 80%; /* 设置歌词区域宽度 */
   padding-left: 20px;
   border-left: 1px solid #ccc;
   white-space: pre-wrap; /* 保持歌词的格式并允许换行 */

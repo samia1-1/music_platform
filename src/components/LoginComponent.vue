@@ -126,7 +126,7 @@ export default {
           localStorage.setItem('user', JSON.stringify(response.data.data));
         }).catch(error => {
           console.error('Fetch user info error:', error);
-          this.showAlertMessage('获取用户信息时发生错误', 'error');
+          // this.showAlertMessage('获取用户信息时发生错误', 'error');
         });
       }
     },

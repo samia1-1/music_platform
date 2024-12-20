@@ -1,7 +1,7 @@
 <template>
   <div class="personal-info">
     <div class="info-item">
-      <label for="username"><strong>用户名:</strong></label>
+      <label for="username"><strong>名字:</strong></label>
       <input type="text" id="username" v-model="editableUser.name" />
       <button @click="updateUserInfo">修改</button>
     </div>

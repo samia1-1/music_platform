@@ -5,17 +5,16 @@
       <a v-if="isLoggedIn" :class="{ active: activeIndex === '2' }" @click="goToPersonalInfo">我的</a>
       <a v-if="!isLoggedIn" :class="{ active: activeIndex === '3' }" @click="goToLogin">登录</a>
       
-      <!-- 添加音乐搜索表单 -->
-      <form @submit.prevent="handleMusicSearch" class="search-form">
-        <input type="text" v-model="musicSearchQuery" placeholder="搜索音乐" />
-        <button type="submit">搜索</button>
-      </form>
-      
-      <!-- 添加 MV 搜索表单 -->
-      <form @submit.prevent="handleMvSearch" class="search-form">
-        <input type="text" v-model="mvSearchQuery" placeholder="搜索 MV" />
-        <button type="submit">搜索</button>
-      </form>
+      <!-- 合并搜索框和切换按钮 -->
+      <div class="search-container">
+        <button @click="toggleSearchType" class="toggle-search-btn">
+          {{ searchType === 'music' ? '音乐' : 'MV' }}
+        </button>
+        <form @submit.prevent="handleSearch" class="search-form">
+          <input type="text" v-model="searchQuery" :placeholder="searchType === 'music' ? '搜索音乐' : '搜索 MV'" />
+          <button type="submit">搜索</button>
+        </form>
+      </div>
     </nav>
     <div class="content">
       <div class="sidebar">
@@ -25,15 +24,15 @@
         </ul>
       </div>
       <div class="main-content" v-if="selectedCategory">
-        <div class="music-section">
+        <div v-if="searchType === 'music'" class="music-section">
           <h2>音乐</h2>
           <div class="navigation">
             <button @click="prevMusic">←</button>
             <transition-group name="slide-fade" tag="div" class="music-list">
-                <div v-for="music in musicList" :key="music.id" class="music-item" @click="showMusicDetails(music.id)">
+                <div v-for="music in displayedResults" :key="music.id" class="music-item" @click="showMusicDetails(music.id)">
                   <div class="music-card">
                     <img :src="music.photo" alt="music photo" class="music-photo" />
-                    <h3>{{ music.wording }}</h3>
+                    <h3>{{ music.name }}</h3>
                     <p>作曲: {{ music.writeMusic }}</p>
                     <p>歌手: {{ music.singer }}</p>
                     <!-- <button @click.stop="openAddToPlaylistModal(music.id)" class="btn add-playlist-btn">加入我的歌单</button> -->
@@ -43,12 +42,12 @@
             <button @click="nextMusic">→</button>
           </div>
         </div>
-        <div class="mv-section">
+        <div v-else class="mv-section">
           <h2>MV</h2>
           <div class="navigation">
             <button @click="prevMV">←</button>
             <transition-group name="slide-fade" tag="div" class="mv-list">
-              <div v-for="mv in mvList" :key="mv.id" class="mv-item" @click="showMVDetails(mv.id)">
+              <div v-for="mv in displayedResults" :key="mv.id" class="mv-item" @click="showMVDetails(mv.id)">
                 <div class="mv-card">
                   <img :src="mv.photo" alt="mv photo" class="mv-photo" />
                   <h3>{{ mv.name }}</h3>
@@ -78,17 +77,12 @@
               <button class="btn primary" @click="closeDetailsModal">关闭</button>
               <button v-if="detailsType === 'music'" class="btn secondary" @click="openAddToPlaylistModal(details.id)">加入我的歌单</button>
             </div>
-            <div class="lyrics-right" v-if="detailsType === 'music'">
-              <p><strong>歌词:</strong></p>
-              <p>{{ details.lyric }}</p>
+            <div class="lyrics">
+              <h3>歌词</h3>
+              <p>{{ songLyrics }}</p>
             </div>
           </div>
         </div>
-        <div class="lyrics">
-          <h3>歌词</h3>
-          <p>{{ songLyrics }}</p>
-        </div>
-        <button @click="closeDetailsModal" class="btn secondary">关闭</button>
       </div>
     </div>
     <div v-if="showPlaylistModal" class="modal">
@@ -133,6 +127,30 @@
         <button @click="closeSelectPlaylistBox" class="btn secondary">关闭</button>
       </div>
     </div>
+
+    <!-- 搜索结果弹窗 -->
+    <div v-if="showSearchResultsModal" class="modal">
+      <div class="modal-content">
+        <h2>搜索结果</h2>
+        <button @click="closeSearchResultsModal" class="btn secondary">关闭</button>
+        <div v-if="searchResults.length > 0">
+          <ul>
+            <li v-for="item in searchResults" :key="item.id">
+              <!-- 根据搜索类型显示不同内容 -->
+              <template v-if="searchType === 'music'">
+                {{ item.name }} - {{ item.singer }}
+              </template>
+              <template v-else>
+                {{ item.name }} - {{ item.author }}
+              </template>
+            </li>
+          </ul>
+        </div>
+        <div v-else>
+          <p>没有找到相关结果。</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -166,8 +184,11 @@ export default {
       detailsType: '',
       showAddToPlaylistModal: false, // 控制模态框显示
       currentSongId: null, // 当前选择的歌曲ID
-      musicSearchQuery: '', // 添加音乐搜索查询
-      mvSearchQuery: '', // 添加 MV 搜索查询
+      searchType: 'music', // 添加搜索类型，初始为音乐
+      searchQuery: '',     // 合并后的搜索查询
+      songLyrics: '', // 添加用于存储歌词的属性
+      searchResults: [], // 新增，用于存储搜索结果
+      showSearchResultsModal: false, // 新增用于控制弹窗显示
     };
   },
   setup() {
@@ -185,17 +206,8 @@ export default {
     isLoggedIn() {
       return this.userStore.getIsLoggedIn;
     },
-    filteredMusic() {
-      if (this.musicSearchQuery.trim()) {
-        return this.musicList.filter(music => music.wording.includes(this.musicSearchQuery.trim()));
-      }
-      return this.musicList;
-    },
-    filteredMVs() {
-      if (this.mvSearchQuery.trim()) {
-        return this.mvList.filter(mv => mv.name.includes(this.mvSearchQuery.trim()));
-      }
-      return this.mvList;
+    displayedResults() {
+      return this.searchType === 'music' ? this.musicList : this.mvList;
     },
   },
   methods: {
@@ -248,6 +260,7 @@ export default {
           if (Array.isArray(records)) { // 确保 records 是一个数组
             this.musicList = records.map(record => ({
               id: record.id,
+              name: record.name,
               wording: record.wording,
               writeMusic: record.writeMusic,
               photo: record.photo,
@@ -323,6 +336,8 @@ export default {
       axios.get(`/music/${id}`).then(response => {
         this.details = response.data.data; 
         this.detailsType = 'music';
+        // 获取歌词，使用正确的字段名 'lyric'
+        this.songLyrics = response.data.data.lyric;
         this.showDetailsModal = true;
       }).catch(error => {
         console.error(error);
@@ -387,7 +402,7 @@ export default {
           localStorage.setItem('user', JSON.stringify(response.data.data));
         }).catch(error => {
           console.error(error);
-          this.showAlertMessage('获取用户信息时发生错误', 'error');
+          // this.showAlertMessage('获取用户信息时发生错误', 'error');
         });
       }
     },
@@ -412,25 +427,6 @@ export default {
       this.showAddToPlaylistModal = false;
       this.currentSongId = null;
     },
-    fetchPlaylists() {
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        axios.get('/playlist/list', { params: { userId } })
-          .then(response => {
-            if (response.data.code === 200) {
-              this.playlists = response.data.data;
-            } else {
-              this.showAlertMessage('获取歌单失败: ' + response.data.msg, 'error');
-            }
-          })
-          .catch(error => {
-            console.error('获取歌单时发生错误:', error);
-            this.showAlertMessage('获取歌单时发生错误', 'error');
-          });
-      } else {
-        this.showAlertMessage('请先登录', 'error');
-      }
-    },
     handleDeleteSong(playlistId, musicId) {
       const userStore = useUserStore();
       userStore.deleteSongFromPlaylist({ playlistId, musicId })
@@ -440,13 +436,33 @@ export default {
           }
         });
     },
-    handleMusicSearch() {
-      // 搜索逻辑已在 computed 属性中实现
-      console.log('音乐搜索:', this.musicSearchQuery);
+    toggleSearchType() {
+      this.searchType = this.searchType === 'music' ? 'mv' : 'music';
+      this.searchQuery = ''; // 切换搜索类型时清空搜索框
     },
-    handleMvSearch() {
-      // 搜索逻辑已在 computed 属性中实现
-      console.log('MV搜索:', this.mvSearchQuery);
+    handleSearch() {
+      if (this.searchQuery.trim()) {
+        const url = this.searchType === 'music' ? '/music/search' : '/mv/search';
+        axios.get(url, { params: { name: this.searchQuery.trim() } })
+          .then(response => {
+            if (response.data.code === 200) {
+              // 如果 data 是嵌套数组，取第一个数组的内容
+              this.searchResults = Array.isArray(response.data.data[0]) ? response.data.data[0] : response.data.data;
+              this.showSearchResultsModal = true;
+            } else {
+              this.showAlertMessage('搜索失败: ' + response.data.msg, 'error');
+            }
+          })
+          .catch(error => {
+            console.error('搜索时发生错误:', error);
+            this.showAlertMessage('搜索时发生错误', 'error');
+          });
+      } else {
+        this.showAlertMessage('请输入搜索内容', 'info');
+      }
+    },
+    closeSearchResultsModal() {
+      this.showSearchResultsModal = false; // 关闭搜索结果弹窗
     },
   },
   created() {
@@ -483,7 +499,7 @@ export default {
   padding: 10px;
   border-radius: 5px;
   transition: background-color 0.3s;
-  cursor: pointer; /* 添加此行 */
+  cursor: pointer; /* 添加��行 */
   width: 120px; /* 扩大宽度 */
   text-align: center; /* 居中对齐 */
 }
@@ -503,10 +519,10 @@ export default {
   border-right: 1px solid #ccc;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-height: 100vh; /* 修改为 100vh 以铺满整个窗口高度 */
+  min-height: 80vh; /* 修改为 100vh 以铺满整个窗口高度 */
   display: flex;
   flex-direction: column;
-  height: 100%; /* 确保侧边栏占满父容器的高度 */
+  height: 80%; /* 确保侧边栏占满父容器的高度 */
 }
 .sidebar h3 {
   margin-bottom: 10px;
@@ -557,7 +573,7 @@ export default {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  min-height: 40vh; /* 设置默认高度 */
+  min-height: 40vh; /* 设置默认高�� */
   overflow-y: auto; /* 添加垂直滚动条 */
 }
 .music-item, .mv-item {
@@ -594,6 +610,7 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
   height: 350px; /* 设置固定高度 */
+  width: 80%; /* 设置宽度 */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -665,6 +682,7 @@ export default {
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
+  width: 80%; /* 设置宽度 */
 }
 .music-card h3, .mv-card h3 {
   margin: 10px 0;
@@ -673,7 +691,7 @@ export default {
 }
 .music-card p, .mv-card p {
   margin: 5px 0;
-  font-size: 14px;
+  font-size: 11.5px;
   color: #666;
 }
 .modal {
@@ -692,26 +710,25 @@ export default {
   padding: 20px;
   border-radius: 10px;
   text-align: center;
-  width: 90%; /* 增大模态框宽度 */
-  max-width: 800px; /* 增大最大宽度 */
+  width: 100%;
+  max-width: 300%;
   display: flex;
-  flex-direction: row;
-  width: 80%; /* 增大模态框宽度 */
-  max-width: 1000px; /* 设置更大的最大宽度 */
+  flex-direction: row; /* 修改为水平布局 */
+  height: auto;
 }
 .song-details {
-  width: 60%; /* 增加歌曲详情区域的宽度 */
+  width: 100%; /* 增加歌曲详情区域的宽度 */
   padding-right: 20px;
 }
 .lyrics {
-  width: 40%; /* 设置歌词区域宽度 */
+  flex: 5; /* 设置歌词区域占比 */
   padding-left: 20px;
   border-left: 1px solid #ccc;
   white-space: pre-wrap; /* 保持歌词的格式并允许换行 */
   overflow-y: auto; /* 添加垂直滚动 */
 }
 .song-details p, .lyrics p {
-  white-space: pre-wrap; /* 确保歌词正常展示和换行 */
+  white-space: pre-wrap; /* 确保歌词���常展示和换行 */
 }
 .modal-content img {
   width: 100%;
@@ -823,13 +840,14 @@ export default {
   transform: scale(1.02);}.sidebar ul li.selected {  background-color: #007bff;  color: #fff;}
 .modal-body {
   display: flex;
+  width:100%;
 }
 .details-left {
   flex: 2;
   padding-right: 20px;
 }
-.lyrics-right {
-  flex: 2; /* 增大歌词板块宽度 */
+.lyrics {
+  flex: 3; /* 将 flex 值从 2 增加到 3，扩大宽度 */
   padding-left: 20px;
   border-left: 1px solid #ccc;
   overflow-y: auto;
@@ -938,5 +956,53 @@ export default {
 
 .music-item:first-child {
   width: 30%; /* 设置第一个音乐项宽度与其他一致 */
+}
+.search-container {
+  display: flex;
+  align-items: center;
+  margin-left: 20px;
+}
+
+.toggle-search-btn {
+  padding: 8px 12px;
+  margin-right: 8px;
+  background-color: #1d5682;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 14px;
+}
+
+.toggle-search-btn:hover {
+  background-color: #5a5a68;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+}
+
+.modal-content {
+  max-width: 600px;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+}
+
+.modal-content ul {
+  list-style: none;
+  padding: 0;
+}
+
+.modal-content li {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.modal-content li:last-child {
+  border-bottom: none;
 }
 </style>
