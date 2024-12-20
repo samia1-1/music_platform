@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
 
-const BASE_URL = 'http://192.168.111.250:8080';
+const BASE_URL = 'http://101.37.117.57:8080';
 
 export default defineConfig({
   plugins: [

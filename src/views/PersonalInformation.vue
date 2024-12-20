@@ -1,7 +1,10 @@
 <template>
   <div class="personal-info-container">
     <button class="back-home-btn" @click="goToHome">返回首页</button>
-    <div v-if="!userStore.getIsLoggedIn" class="alert-box error">请先登录以查看个人信息和歌单。</div>
+    <div v-if="!userStore.getIsLoggedIn" class="alert-box error">
+      请先登录以查看个人信息和歌单。
+      <button @click="goToLogin">去登录</button>
+    </div>
     <div v-else>
       <div class="tabs">
         <button :class="{ active: activeTab === 'personal-info' }" @click="toggleTab('personal-info')">个人信息</button>
@@ -49,10 +52,10 @@ export default {
   },
   computed: {
     user() {
-      return this.userStore.getUser // 更新为 getUser
+      return this.userStore.getUser
     },
     playlists() {
-      return this.userStore.getPlaylists // 更新为 getPlaylists
+      return this.userStore.getPlaylists
     }
   },
   created() {
@@ -60,7 +63,7 @@ export default {
       this.userStore = useUserStore();
       if (this.userStore.getIsLoggedIn) {
         this.fetchUserInfo();
-        this.fetchPlaylists(); // 自动查询用户已有歌单
+        this.fetchPlaylists(); // 自动查询用户信息
       }
     } catch (error) {
       console.error('Error in created hook:', error);
@@ -195,6 +198,9 @@ export default {
       this.userStore.setUser(null); // 清空用户信息
       this.$router.push('/login');
     },
+    goToLogin() {
+      this.$router.push('/login');
+    },
     updateUserInfo(field) {
       const updatedData = { [field]: this.editableUser[field] };
       const data = {
@@ -215,7 +221,6 @@ export default {
           alert('更新信息时发生错误');
         });
     },
-    // ...其他方法...
   }
 }
 </script>
@@ -346,5 +351,18 @@ button:hover {
 }
 .logout-btn:hover {
   background-color: #c82333;
+}
+
+button.go-to-login {
+  background-color: #8B0000; /* 深红色 */
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 120px;
+  height: 40px; /* 设置固定宽高 */
+}
+
+button.go-to-login:hover {
+  background-color: #2c0000;
 }
 </style>

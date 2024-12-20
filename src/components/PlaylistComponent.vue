@@ -4,16 +4,21 @@
     <ul class="playlist-list">
       <li v-for="playlist in playlists" :key="playlist.id" class="playlist-item">
         {{ playlist.name }}
-        <button @click="deletePlaylist(playlist.id)" class="delete-btn">删除</button>
-        <button @click="fetchPlaylistSongs(playlist.id)" class="view-btn">查看歌曲</button>
+        <div class="button-group">
+          <button @click="deletePlaylist(playlist.id)" class="delete-btn">删除</button>
+          <button @click="fetchPlaylistSongs(playlist.id)" class="view-btn">查看歌曲</button>
+        </div>
       </li>
     </ul>
     
-    <!-- 新增模态框 -->
+    <!-- 模态框 -->
     <div v-if="isModalVisible" class="modal">
       <div class="modal-content">
         <h3>{{ selectedPlaylist.name }} - 歌曲列表</h3>
         <ul class="songs-list">
+          <li v-if="selectedPlaylistSongs.length === 0" class="song-item">
+            <p>该歌单中没有音乐。</p>
+          </li>
           <li v-for="song in selectedPlaylistSongs" :key="song.id" class="song-item">
             <div class="song-info">
               <img :src="song.photo" alt="song photo" class="song-photo" />
@@ -65,7 +70,7 @@ export default {
     }
   },
   methods: {
-    fetchPlaylistSongs(playlistId) { // 现有方法，无需更改
+    fetchPlaylistSongs(playlistId) {
       const userStore = useUserStore();
       const userId = userStore.getUser.id;
       if (userId) {
@@ -165,17 +170,22 @@ export default {
   transform: scale(1.02);
 }
 
+.button-group {
+  display: flex;
+  gap: 5px; /* 按钮之间的间距 */
+}
+
 .delete-btn, .view-btn, .play-btn {
   padding: 5px 10px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
+  width: 120px; /* 扩大按钮宽度 */
 }
 
 .delete-btn {
   background-color: #ff4d4d;
-  color: #fff;
 }
 
 .delete-btn:hover {
@@ -185,7 +195,6 @@ export default {
 .view-btn {
   background-color: #007bff;
   color: #fff;
-  margin-left: 5px;
 }
 
 .view-btn:hover {
@@ -195,7 +204,6 @@ export default {
 .play-btn {
   background-color: #28a745;
   color: #fff;
-  margin-left: 5px;
 }
 
 .play-btn:hover {
@@ -227,10 +235,10 @@ export default {
   background-color: #fff;
   padding: 20px;
   border-radius: 10px;
-  width: 80%; /* 增大模态框宽度 */
-  max-width: 1000px; /* 设置更大的最大宽度 */
+  width: 80%; /* 模态框宽度 */
+  max-width: 1000px; /* 设置最大宽度 */
   max-height: 80vh; /* 设置最大高度 */
-  overflow-y: auto; /* 添加垂直滚动 */
+  overflow-y: auto; /* 垂直滚动 */
 }
 
 .songs-list {
@@ -266,7 +274,7 @@ export default {
 .song-details {
   display: flex;
   flex-direction: column;
-  width: 60%; /* 增加歌曲详情区域的宽度 */
+  width: 100%; /* 增加歌曲详情区域的宽度 */
   word-wrap: break-word; /* 确保文本换行 */
 }
 
@@ -294,7 +302,7 @@ export default {
 
 /* 新增歌词样式 */
 .lyrics {
-  width: 40%; /* 设置歌词区域宽度 */
+  width: 80%; /* 设置歌词区域宽度 */
   padding-left: 20px;
   border-left: 1px solid #ccc;
   white-space: pre-wrap; /* 保持歌词的格式并允许换行 */

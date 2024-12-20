@@ -1,52 +1,52 @@
 <template>
   <div class="form-container">
     <button class="back-home-btn" @click="goToHome">返回主页</button>
-    <transition name="slide-fade" mode="out-in">
-      <div v-if="isLogin" class="form-box">
-        <form @submit.prevent="handleLogin">
-          <div class="form-item">
-            <label for="username">用户名</label>
-            <input type="text" id="username" v-model="loginForm.username" />
-          </div>
-          <div class="form-item">
-            <label for="password">密码</label>
-            <input type="password" id="password" v-model="loginForm.password" />
-          </div>
-          <div class="form-item">
-            <button type="submit" class="btn primary">登录</button>
-            <button type="button" class="btn" @click="toggleForm">切换到注册</button>
-          </div>
-          <div class="form-item">
-            <button type="button" class="btn" @click="showSkipLoginModal">不登陆直接使用</button>
-          </div>
-        </form>
-      </div>
-    </transition>
-    <transition name="slide-fade" mode="out-in">
-      <div v-if="!isLogin" class="form-box">
-        <form @submit.prevent="handleRegister">
-          <div class="form-item">
-            <label for="register-username">用户名</label>
-            <input type="text" id="register-username" v-model="registerForm.username" />
-          </div>
-          <div class="form-item">
-            <label for="register-password">密码</label>
-            <input type="password" id="register-password" v-model="registerForm.password" />
-          </div>
-          <div class="form-item">
-            <label for="confirm-password">确认密码</label>
-            <input type="password" id="confirm-password" v-model="registerForm.confirmPassword" />
-          </div>
-          <div class="form-item">
-            <button type="submit" class="btn primary">注册</button>
-            <button type="button" class="btn" @click="toggleForm">切换到登录</button>
-          </div>
-          <div class="form-item">
-            <button type="button" class="btn" @click="showSkipLoginModal">不注册直接使用</button>
-          </div>
-        </form>
-      </div>
-    </transition>
+    <div class="form-wrapper">
+      <transition name="rotate" mode="out-in">
+        <div v-if="isLogin" key="login" class="form-box">
+          <form @submit.prevent="handleLogin">
+            <div class="form-item">
+              <label for="username">用户名</label>
+              <input type="text" id="username" v-model="loginForm.username" autocomplete="username" />
+            </div>
+            <div class="form-item">
+              <label for="password">密码</label>
+              <input type="password" id="password" v-model="loginForm.password" autocomplete="current-password" />
+            </div>
+            <div class="form-item">
+              <button type="submit" class="btn primary">登录</button>
+              <button type="button" class="btn" @click="toggleForm">切换到注册</button>
+            </div>
+            <!-- <div class="form-item">
+              <button type="button" class="btn1" @click="showSkipLoginModal">不登陆直接使用</button>
+            </div> -->
+          </form>
+        </div>
+        <div v-else key="register" class="form-box">
+          <form @submit.prevent="handleRegister">
+            <div class="form-item">
+              <label for="register-username">用户名</label>
+              <input type="text" id="register-username" v-model="registerForm.username" autocomplete="username" />
+            </div>
+            <div class="form-item">
+              <label for="register-password">密码</label>
+              <input type="password" id="register-password" v-model="registerForm.password" autocomplete="new-password" />
+            </div>
+            <div class="form-item">
+              <label for="confirm-password">确认密码</label>
+              <input type="password" id="confirm-password" v-model="registerForm.confirmPassword" autocomplete="new-password" />
+            </div>
+            <div class="form-item">
+              <button type="submit" class="btn primary">注册</button>
+              <button type="button" class="btn" @click="toggleForm">切换到登录</button>
+            </div>
+            <!-- <div class="form-item">
+              <button type="button" class="btn" @click="showSkipLoginModal">不注册直接使用</button>
+            </div> -->
+          </form>
+        </div>
+      </transition>
+    </div>
     <div v-if="showModal" class="modal">
       <div class="modal-content">
         <p>若您不进行登陆操作将无法获取到本网站所有服务</p>
@@ -107,7 +107,6 @@ export default {
       });
     },
     handleRegister() {
-      // 检查请求体是否包含 name 和 password 字段
       if (!this.registerForm.username || !this.registerForm.password) {
         this.showAlertMessage('用户名和密码不能为空', 'error');
         return;
@@ -119,7 +118,7 @@ export default {
       }
 
       const registerData = {
-        name: this.registerForm.username, // 修改 username 为 name
+        name: this.registerForm.username,
         password: this.registerForm.password
       };
 
@@ -134,19 +133,6 @@ export default {
         console.error(error);
         this.showAlertMessage('注册时发生错误', 'error');
       });
-    },
-    fetchUserInfo() {
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        axios.get('/user', { params: { userId: userId } }).then(response => {
-          const userStore = useUserStore();
-          userStore.setUser(response.data.data);
-          localStorage.setItem('user', JSON.stringify(response.data.data));
-        }).catch(error => {
-          console.error('Fetch user info error:', error);
-          this.showAlertMessage('获取用户信息时发生错误', 'error');
-        });
-      }
     },
     showSkipLoginModal() {
       this.showModal = true;
@@ -168,29 +154,7 @@ export default {
     },
     goToHome() {
       this.$router.push('/');
-    },
-    addToPlaylist(playlistId) {
-      if (this.currentSongId && playlistId) {
-        const data = {
-          playlistId: playlistId,
-          musicId: this.currentSongId,
-          userId: localStorage.getItem('userId') // 确保获取 userId
-        };
-        axios.put('/playlist/music', data) // 修改接口 URL
-          .then(response => {
-            if (response.data.code === 200) {
-              this.showAlertMessage('已添加到歌单', 'success');
-              this.closeAddToPlaylistModal();
-            } else {
-              this.showAlertMessage('添加到歌单失败2: ' + response.data.msg, 'error');
-            }
-          })
-          .catch(error => {
-            console.error('添加到歌单时发生错误:', error);
-            this.showAlertMessage('添加到歌单时发生错误', 'error');
-          });
-      }
-    },
+    }
   },
   created() {
     const userStore = useUserStore();
@@ -208,10 +172,14 @@ export default {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  width: 100%; /* 设置宽度为 100% */
+  max-width: 600px; /* 设置最大宽度 */
+  margin: 0 auto; /* 居中对齐 */
 }
 
 .form-box {
-  width: 300px;
+  width: 100%; /* 设置宽度为 100% */
+  max-width: 300px; /* 设置最大宽度 */
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -244,28 +212,23 @@ export default {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
+  width: 120px; /* 扩大按钮宽度 */
+  height: 40px; /* 设置固定高度 */
 }
 
 .btn.primary {
   background-color: #007bff;
   color: #fff;
 }
-
 .btn:hover {
   background-color: #0056b3;
 }
 
-.slide-fade-enter-active, .slide-fade-leave-active {
-  transition: all 0.5s ease;
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s ease;
 }
 
-.slide-fade-enter {
-  transform: translateX(-100%);
-  opacity: 0;
-}
-
-.slide-fade-leave-to {
-  transform: translateX(100%);
+.fade-enter, .fade-leave-to {
   opacity: 0;
 }
 
@@ -330,5 +293,19 @@ export default {
 }
 .back-home-btn:hover {
   background-color: #0056b3;
+}
+
+.form-wrapper {
+  perspective: 1000px; /* 添加透视效果 */
+}
+.rotate-enter-active, .rotate-leave-active {
+  transition: transform 0.6s ease, opacity 0.6s ease;
+}
+.rotate-enter, .rotate-leave-to {
+  transform: rotateY(180deg);
+  opacity: 0;
+}
+.rotate-enter {
+  transform: rotateY(-180deg);
 }
 </style>

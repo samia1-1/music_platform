@@ -1,7 +1,7 @@
 <template>
   <div class="personal-info">
     <div class="info-item">
-      <label for="username"><strong>用户名:</strong></label>
+      <label for="username"><strong>名字:</strong></label>
       <input type="text" id="username" v-model="editableUser.name" />
       <button @click="updateUserInfo">修改</button>
     </div>
@@ -37,7 +37,7 @@ export default {
       name: userStore.getUser.name || '',
       gender: userStore.getUser.gender || '',
       hobby: userStore.getUser.hobby || '',
-      password: '' // 确保密码字段存在
+      password: ''
     }));
 
     const updateUserInfo = () => {
@@ -46,12 +46,12 @@ export default {
         name: editableUser.value.name,
         gender: editableUser.value.gender,
         hobby: editableUser.value.hobby,
-        password: editableUser.value.password // 添加密码字段
+        password: editableUser.value.password
       };
 
-      console.log('Updating user info with data:', data); // 添加日志输出
+      console.log('Updating user info with data:', data); // 输出
       axios.put(`/user`, data).then(response => {
-        console.log('Update user info response:', response); // 添加日志输出
+        console.log('Update user info response:', response); // 输出
         if (response.data.code === 200) {
           userStore.fetchPlaylists(); // 更新用户信息后刷新歌单列表
           alert('信息更新成功');
@@ -77,9 +77,14 @@ export default {
       }
     };
 
+    const goToLogin = () => {
+      this.$router.push('/login');
+    };
+
     return {
       editableUser,
-      updateUserInfo
+      updateUserInfo,
+      goToLogin
     };
   },
 };
@@ -146,5 +151,18 @@ export default {
 
 .back-home-btn:hover {
   background-color: #0056b3;
+}
+
+button.go-to-login {
+  background-color: #8B0000;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 120px;
+  height: 40px;
+}
+
+button.go-to-login:hover {
+  background-color: #A52A2A;
 }
 </style>

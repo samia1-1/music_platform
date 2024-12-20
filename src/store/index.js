@@ -5,7 +5,7 @@ export const useUserStore = defineStore('user', {
   state: () => ({
     user: null, // 用户信息对象
     isLoggedIn: false,
-    playlists: [] // 添加 playlists 状态
+    playlists: []
   }),
   getters: {
     getUser: state => state.user, // 获取用户信息
@@ -66,7 +66,7 @@ export const useUserStore = defineStore('user', {
       }
     },
     addToPlaylist(data) {
-      axios.put('/playlist/music', data) // 使用正确的 PUT 请求端点
+      axios.put('/playlist/music', data) 
         .then(response => {
           if (response.data.code === 200) {
             this.fetchPlaylists(); // 添加成功后刷新歌单
@@ -90,7 +90,7 @@ export const useUserStore = defineStore('user', {
         };
         return axios.put('/playlist/music', data) // 返回 Promise
           .then(response => {
-            if (response.data.code === 0) {
+            if (response.data.code === 200) {
               this.fetchPlaylists(); // 刷新歌单
               alert('已成功删除歌曲');
             } else {

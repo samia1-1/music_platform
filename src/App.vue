@@ -9,5 +9,5 @@ export default {
 </script>
 
 <style>
-/* 全局样式 */
+/* 全局 */
 </style>
