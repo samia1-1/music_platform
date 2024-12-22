@@ -6,6 +6,7 @@
       <a v-if="!isLoggedIn" :class="{ active: activeIndex === '3' }" @click="goToLogin">登录</a>
       
       <!-- 搜索框和切换按钮 -->
+      <!-- 合并搜索框和切换按钮 -->
       <div class="search-container">
         <button @click="toggleSearchType" class="toggle-search-btn">
           {{ searchType === 'music' ? '音乐' : 'MV' }}
@@ -29,19 +30,19 @@
             <h3>音乐</h3>
             <div class="navigation">
               <button @click="prevMusic">←</button>
-              <div class="music-list">
-                <div v-for="music in displayedResults" :key="music.id" class="music-item" @click="showMusicDetails(music.id)">
-                  <div class="music-card">
-                    <img :src="music.photo" alt="music photo" class="music-photo" />
-                    <h3>{{ music.name }}</h3>
-                    <p>作曲: {{ music.writeMusic }}</p>
-                    <p>歌手: {{ music.singer }}</p>
-                  </div>
+            <div class="music-list">
+              <div v-for="music in displayedResults" :key="music.id" class="music-item" @click="showMusicDetails(music.id)">
+                <div class="music-card">
+                  <img :src="music.photo" alt="music photo" class="music-photo" />
+                  <h3>{{ music.name }}</h3>
+                  <p>作曲: {{ music.writeMusic }}</p>
+                  <p>歌手: {{ music.singer }}</p>
                 </div>
               </div>
-              <button @click="nextMusic">→</button>
             </div>
+            <button @click="nextMusic">→</button>
           </div>
+        </div>
           <div v-else key="mv" class="mv-section">
             <h2>MV</h2>
             <div class="navigation">
@@ -154,6 +155,30 @@
         </div>
         <div class="button-container">
           <button @click="closeSearchResultsModal" class="btn secondary">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 搜索结果弹窗 -->
+    <div v-if="showSearchResultsModal" class="modal">
+      <div class="modal-content">
+        <h2>搜索结果</h2>
+        <button @click="closeSearchResultsModal" class="btn secondary">关闭</button>
+        <div v-if="searchResults.length > 0">
+          <ul>
+            <li v-for="item in searchResults" :key="item.id">
+              <!-- 根据搜索类型显示不同内容 -->
+              <template v-if="searchType === 'music'">
+                {{ item.name }} - {{ item.singer }}
+              </template>
+              <template v-else>
+                {{ item.name }} - {{ item.author }}
+              </template>
+            </li>
+          </ul>
+        </div>
+        <div v-else>
+          <p>没有找到相关结果。</p>
         </div>
       </div>
     </div>
@@ -704,7 +729,7 @@ export default {
 }
 .music-card p, .mv-card p {
   margin: 5px 0;
-  font-size: 14px;
+  font-size: 11.5px;
   color: #666;
 }
 .modal {
@@ -735,7 +760,7 @@ export default {
   padding: 0px;
 }
 .song-details p, .lyrics p {
-  white-space: pre-wrap; /* 确保歌词正常展示和换行 */
+  white-space: pre-wrap; /* 确保歌词���常展示和换行 */
 }
 .modal-content img {
   width: 100%;
